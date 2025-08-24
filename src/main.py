@@ -2,9 +2,15 @@ import os
 import sys
 import firebase_admin
 from firebase_admin import credentials, auth
+import json
 
-cred = credentials.Certificate("config/serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+
+from firebase_admin import credentials, initialize_app
+
+firebase_json = os.environ.get("FIREBASE_CREDENTIALS")
+cred = credentials.Certificate(json.loads(firebase_json))
+initialize_app(cred)
+
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
