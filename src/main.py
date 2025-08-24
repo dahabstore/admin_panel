@@ -1,9 +1,14 @@
 import os
 import sys
+import firebase_admin
+from firebase_admin import credentials, auth
+
+cred = credentials.Certificate("config/serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
@@ -23,6 +28,20 @@ os.makedirs(os.path.join(os.path.dirname(__file__), 'database'), exist_ok=True)
 
 # تهيئة قاعدة البيانات
 db = SQLAlchemy(app)
+
+@app.before_request
+def verify_firebase_token():
+    public_paths = ['/', '/api/health']
+    if request.path in public_paths or request.path.startswith('/static'):
+        return
+    id_token = request.headers.get('Authorization')
+    if not id_token:
+        return jsonify({'success': False, 'message': 'مطلوب تسجيل الدخول'}), 401
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        request.user = decoded_token
+    except Exception:
+        return jsonify({'success': False, 'message': 'رمز الدخول غير صالح'}), 401
 
 # تعريف النماذج
 class VIPLevel(db.Model):
