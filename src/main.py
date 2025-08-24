@@ -8,8 +8,12 @@ import json
 from firebase_admin import credentials, initialize_app
 
 firebase_json = os.environ.get("FIREBASE_CREDENTIALS")
+if not firebase_json:
+    raise ValueError("Environment variable FIREBASE_CREDENTIALS is missing or empty.")
+
 cred = credentials.Certificate(json.loads(firebase_json))
 initialize_app(cred)
+
 
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
