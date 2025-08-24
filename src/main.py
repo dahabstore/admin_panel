@@ -9,27 +9,25 @@ from firebase_admin import credentials, initialize_app
 
 firebase_src = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
 
-if firebase_src:
-    # لو كانت قيمة Env Var مساراً إلى ملف
-    if os.path.isfile(firebase_src):
-        cred = credentials.Certificate(firebase_src)
-    else:
-        # جرّب تحويلها إلى dict من JSON
-        try:
-            creds_dict = json.loads(firebase_src)
-        except json.JSONDecodeError:
-            raise ValueError(
-                "FIREBASE_CREDENTIALS ليس JSON صالحاً ولا مساراً لملف"
-            )
-        cred = credentials.Certificate(creds_dict)
+if not firebase_src:
+    # fallback لاستخدام Secret File
+    firebase_src = "/etc/secrets/serviceAccountKey.json"
 
+# إذا كان المسار يشير لملف موجود
+if os.path.isfile(firebase_src):
+    cred = credentials.Certificate(firebase_src)
 else:
-    secret_path = "/etc/secrets/serviceAccountKey.json"
-    if not os.path.exists(secret_path):
-        raise FileNotFoundError(f"لم يُعثر على الملف: {secret_path}")
-    cred = credentials.Certificate(secret_path)
+    # نحاول تفريغ JSON
+    try:
+        creds_dict = json.loads(firebase_src)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            "FIREBASE_CREDENTIALS ليس JSON صالحاً ولا مساراً لملف"
+        ) from e
+    cred = credentials.Certificate(creds_dict)
 
 initialize_app(cred)
+
 
 
 
