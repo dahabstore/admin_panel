@@ -8,11 +8,24 @@ import json
 from firebase_admin import credentials, initialize_app
 
 firebase_json = os.environ.get("FIREBASE_CREDENTIALS")
-if not firebase_json:
-    raise ValueError("Environment variable FIREBASE_CREDENTIALS is missing or empty.")
+if firebase_json:
+    try:
+        creds_dict = json.loads(firebase_json)
+    except json.JSONDecodeError:
+        raise ValueError("FIREBASE_CREDENTIALS ليس JSON صالحاً")
+    cred = credentials.Certificate(creds_dict)
 
-cred = credentials.Certificate(json.loads(firebase_json))
+# 2) وإلّا استخدم Secret File
+else:
+    secret_path = "/etc/secrets/serviceAccountKey.json"
+    if not os.path.exists(secret_path):
+        raise FileNotFoundError(f"لم يتم العثور على الملف السري: {secret_path}")
+    cred = credentials.Certificate(secret_path)
+
+# 3) تهيئة التطبيق
 initialize_app(cred)
+
+
 
 
 # DON'T CHANGE THIS !!!
