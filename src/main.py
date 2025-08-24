@@ -2,48 +2,11 @@ import os
 import sys
 import firebase_admin
 from firebase_admin import credentials, auth
-import json
-
-
-from firebase_admin import credentials, initialize_app
-
-firebase_json = os.environ.get("FIREBASE_CREDENTIALS")
-if firebase_json:
-    try:
-        creds_dict = json.loads(firebase_json)
-    except json.JSONDecodeError:
-        raise ValueError("FIREBASE_CREDENTIALS ليس JSON صالحاً")
-    cred = credentials.Certificate(creds_dict)
-firebase_src = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
-
-if firebase_src:
-    # لو كانت قيمة Env Var مساراً إلى ملف
-    if os.path.isfile(firebase_src):
-        cred = credentials.Certificate(firebase_src)
-    else:
-        # جرّب تحويلها إلى dict من JSON
-        try:
-            creds_dict = json.loads(firebase_src)
-        except json.JSONDecodeError:
-            raise ValueError(
-                "FIREBASE_CREDENTIALS ليس JSON صالحاً ولا مساراً لملف"
-            )
-        cred = credentials.Certificate(creds_dict)
-
-# 2) وإلّا استخدم Secret File
-else:
-    secret_path = "/etc/secrets/serviceAccountKey.json"
-    if not os.path.exists(secret_path):
-        raise FileNotFoundError(f"لم يتم العثور على الملف السري: {secret_path}")
-        raise FileNotFoundError(f"لم يُعثر على الملف: {secret_path}")
-    cred = credentials.Certificate(secret_path)
-
-# 3) تهيئة التطبيق
-initialize_app(cred)
 
 
 
-
+cred = credentials.Certificate("config/serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
