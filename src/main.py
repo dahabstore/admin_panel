@@ -1,12 +1,33 @@
-import os
+import os,json
 import sys
 import firebase_admin
 from firebase_admin import credentials, auth
 
 
 
-cred = credentials.Certificate("config/serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+firebase_src = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
+print("DEBUG ▶︎ source:", repr(firebase_src))
+
+# لو بتستخدم Secret File، نطبع محتويات المجلد للتأكد من المونت:
+if not firebase_src and os.path.isdir("/etc/secrets"):
+    print("DEBUG ▶︎ /etc/secrets contains:", os.listdir("/etc/secrets"))
+
+# بقية الكود كما في آخر نسخة:
+if os.path.isfile(firebase_src):
+    print("DEBUG ▶︎ using file path")
+    cred = credentials.Certificate(firebase_src)
+else:
+    try:
+        creds_dict = json.loads(firebase_src)
+        print("DEBUG ▶︎ parsed JSON successfully")
+        cred = credentials.Certificate(creds_dict)
+    except Exception as e:
+        print("ERROR ▶︎ failed to load creds:", e)
+        raise
+
+initialize_app(cred)
+print("✔ Firebase initialized!")
+
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
